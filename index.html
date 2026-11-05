@@ -6,10 +6,11 @@
   <title>转账审核 · 演示</title>
   <!--
     版本：线上基线 2026-11-02
-    资金后台「转账审核」和「匹配转账信息」演示页，界面与线上一致。
+    发布版本：v1.1 · 2026-11-05
+    资金后台「转账审核」和「匹配转账信息」演示页。
     商户、人名、邮箱、交易号、付款账号和文件名全部虚构，页面上直接展示。
     不使用业务截图中的原始记录。
-    此版本之后的改动记入同目录「需求调整.md」，不回写本基线说明。
+    相对基线的改动记入同目录「需求调整.md」。
   -->
   <style>
     * { box-sizing: border-box; }
@@ -168,7 +169,7 @@
       position: fixed; inset: 0; z-index: 30; background: rgba(0, 0, 0, 0.45);
       display: flex; align-items: center; justify-content: center; padding: 24px 16px;
     }
-    .mask.sub { z-index: 40; background: rgba(0, 0, 0, 0.35); }
+    .mask.sub { z-index: 60; background: rgba(0, 0, 0, 0.35); }
     .dialog {
       width: min(1040px, 100%); max-height: calc(100vh - 48px); background: #fff; border-radius: 8px;
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 9px 28px rgba(0, 0, 0, 0.08);
@@ -214,6 +215,38 @@
     .guide-body { margin: 0; padding: 0 16px 12px 32px; line-height: 1.7; }
     .guide-body li + li { margin-top: 8px; }
     .attach-tip { margin: 8px 0 0; color: rgba(0, 0, 0, 0.65); line-height: 22px; }
+    .sheet tr.attach-split th,
+    .sheet tr.attach-split td { vertical-align: top; }
+    .sheet tr.attach-split th { padding-top: 16px; }
+    .file-rows { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .file-row {
+      display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 12px;
+      border: 1px solid #f0f0f0; border-radius: 6px; background: #fafafa;
+    }
+    .file-row .kind {
+      flex: none; box-sizing: border-box; min-width: 40px; height: 22px; padding: 0 6px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 4px; font-size: 12px; font-weight: 600; font-style: normal; line-height: 1;
+    }
+    .file-row .kind.pdf { color: #cf1322; background: #fff1f0; }
+    .file-row .kind.img { color: #1677ff; background: #e6f4ff; }
+    .file-row .file-name {
+      flex: 1 1 auto; min-width: 0; max-width: none; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; word-break: normal; text-align: left; font-size: 13px; color: rgba(0, 0, 0, 0.88);
+    }
+    .file-row .link { flex: none; margin-left: auto; white-space: nowrap; }
+    .file-row .file-ops { margin-left: auto; display: flex; gap: 12px; flex: none; }
+    .file-row .file-ops .link { margin-left: 0; }
+    .match-files { display: flex; flex-direction: column; gap: 12px; margin: 12px 0 8px; }
+    .match-files .attach-field > span { display: block; margin-bottom: 8px; color: rgba(0, 0, 0, 0.45); }
+    .add-line {
+      display: inline-flex; align-items: center; height: 32px; margin-top: 8px; padding: 0 12px;
+      border: 1px dashed #d9d9d9; border-radius: 6px; background: #fff; color: rgba(0, 0, 0, 0.65); cursor: pointer;
+    }
+    .add-line:hover { border-color: #1677ff; color: #1677ff; }
+    .tip-cell { padding: 8px 12px; }
+    .tip-cell .attach-tip { margin: 0; }
+    .proof-block { margin-top: 16px; }
     .dialog.legend { width: min(560px, 100%); }
     .legend-view { margin: 12px 24px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fafafa; border-radius: 8px; }
     .legend-view img { display: block; max-width: 100%; max-height: min(480px, calc(100vh - 220px)); width: auto; height: auto; object-fit: contain; }
@@ -300,6 +333,15 @@
     .upload:hover, .upload.over { border-color: #1677ff; }
     .upload input { display: none; }
     .upload.bad { border-color: #ff4d4f; }
+    .upload-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 16px; align-items: start; }
+    .upload-slot { min-width: 0; }
+    .upload-slot .form-label { margin-bottom: 2px; }
+    .upload-hint { margin: 0 0 6px; color: rgba(0, 0, 0, 0.45); font-size: 12px; line-height: 18px; }
+    .upload.compact { min-height: 64px; gap: 2px; padding: 8px 10px; }
+    .upload.compact svg { width: 20px; height: 20px; }
+    .upload.compact strong { font-size: 13px; font-weight: 500; line-height: 20px; color: rgba(0, 0, 0, 0.88); }
+    .upload-slot .file-list { max-height: 84px; overflow: auto; margin-top: 6px; }
+    .upload-slot .file-list li span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .file-list { list-style: none; margin: 8px 0 0; padding: 0; }
     .file-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0; }
     .file-ops { display: flex; gap: 12px; flex: none; }
@@ -378,6 +420,13 @@
     .bar.w80 { width: 80%; } .bar.w60 { width: 60%; } .bar.w90 { width: 46%; } .bar.w40 { width: 32%; }
     .paper .note { margin-top: 28px; }
 
+    #hover-tip {
+      position: fixed; z-index: 80; max-width: 280px; padding: 8px 10px;
+      background: rgba(0, 0, 0, 0.85); color: #fff; font-size: 12px; line-height: 18px;
+      font-weight: 400; border-radius: 6px; pointer-events: none; white-space: normal;
+    }
+    #hover-tip[hidden] { display: none; }
+
     #toast {
       position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 90;
       display: none; align-items: center; gap: 8px; padding: 10px 16px; background: #fff;
@@ -408,6 +457,9 @@
     .block { padding: 16px 0; border-bottom: 1px solid #f0f0f0; }
     .block h3 { margin: 0 0 16px; font-size: 14px; font-weight: 600; }
     .detail-grid, .sum-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 32px; }
+    .detail-grid .span2 { grid-column: 1 / -1; }
+    .drawer .attach-fields { display: flex; flex-direction: column; gap: 16px; }
+    .drawer .attach-field > span { display: block; margin-bottom: 8px; color: rgba(0, 0, 0, 0.45); }
     .pair span { display: block; margin-bottom: 4px; color: rgba(0, 0, 0, 0.45); }
     .sum-card { background: #fafafa; border-radius: 6px; padding: 16px 20px; }
     .sum-card span { color: rgba(0, 0, 0, 0.45); }
@@ -598,6 +650,11 @@
       return row.voucher ? [row.voucher] : [];
     }
 
+    function rowOthers(row) {
+      if (Array.isArray(row.others)) return row.others;
+      return rowShots(row).filter((name) => name && name !== row.voucher);
+    }
+
     function prechargeFlag(index) {
       return index % 3 === 2 ? "否" : "是";
     }
@@ -642,8 +699,15 @@
       close: svg('<path d="M6 6l12 12M18 6 6 18"/>', 16),
       user: svg('<circle cx="12" cy="8" r="3"/><path d="M5.5 19c1.4-2.6 3.6-4 6.5-4s5.1 1.4 6.5 4"/>', 16),
       info: svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 8h.01"/>', 14),
+      help: svg('<circle cx="12" cy="12" r="9"/><path d="M9.2 9a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.1 1-1.1 1.9"/><path d="M12 17.2h.01"/>', 14),
       upload: svg('<path d="M12 16V6"/><path d="M8 9.5 12 5.5l4 4"/><path d="M5 19h14"/>', 28)
     };
+    const AMOUNT_TIP = "期望充入客户资金账户的金额，该金额应小于客户实际转账金额（转账凭证中的金额）。";
+
+    function amountLabel() {
+      return '<span class="tip">期望入账金额<button type="button" class="info" data-tip="' + esc(AMOUNT_TIP) + '" aria-label="' + esc(AMOUNT_TIP) + '">' + ICONS.help + "</button></span>";
+    }
+
     const CUSTOMERS = [
       { biz: "履约", name: "青岚百货", mail: "finance@qinglan-shop.test", id: "48136", erp: "QL-48136", manager: "北港结算组", staff: "林知衡" },
       { biz: "广告", name: "青岚百货", mail: "finance@qinglan-shop.test", id: "48136", erp: "QL-48136", manager: "青岚投放组", staff: "沈知夏" },
@@ -679,6 +743,10 @@
           : STATUSES[index % STATUSES.length];
         const biz = index === 1 ? "广告" : index < 20 ? "履约" : (index % 9 === 0 ? "广告" : index % 13 === 0 ? "物流" : "履约");
         const file = token(12000 + index, 12);
+        const voucherName = file.slice(0, 10) + "…" + file.slice(10, 11) + ".pdf";
+        const shots = shotList(index, voucherName);
+        const applied = prechargeFlag(index) === "是";
+        const fulfill = biz === "履约";
         rows.push({
           id: "tr" + String(index + 1).padStart(2, "0"),
           reviewNo: reviewNo(index),
@@ -696,14 +764,19 @@
           payer: PAYERS[(index + 3) % PAYERS.length],
           currency: "USD",
           amount: amount,
-          voucher: file.slice(0, 10) + "…" + file.slice(10, 11) + ".pdf",
-          shots: shotList(index, file.slice(0, 10) + "…" + file.slice(10, 11) + ".pdf"),
+          voucher: voucherName,
+          shots: shots,
+          others: shots.filter((name) => name !== voucherName),
           assign: "-",
           confirmStatus: "已确认",
           status: status,
           internalNote: NOTES[index % NOTES.length],
           precharge: prechargeFlag(index),
           prechargeNo: prechargeNo(index, when),
+          expectedAt: applied && index % 4 !== 0 ? when.slice(0, 10) : "",
+          opsGroup: applied && fulfill ? OPS_GROUPS[index % OPS_GROUPS.length] : "",
+          proofFiles: applied && fulfill ? [token(22000 + index, 8) + ".png"] : [],
+          prechargeRemark: applied ? (fulfill ? "客户已完成转账，申请在途资金预充。" : "广告账户预充。") : "",
           flowId: stillMatched(status) ? "seed-" + index : ""
         });
         attachSettlement(rows[rows.length - 1], index);
@@ -980,7 +1053,7 @@
         '<button type="button" class="icon-btn" data-act="theme" aria-label="外观">' + ICONS.moon + "</button>" +
         '<button type="button" class="avatar" data-act="account" aria-label="账户">' + ICONS.user + "</button></div></header>" +
         '<div class="tabs"><span class="tab">' + ICONS.file + "转账审核</span></div>" +
-        '<main class="content"><p class="note">演示界面。商户、人名、邮箱、交易号和付款账号都是虚构数据，可以直接阅读。当前操作人：' + esc(CURRENT_USER[0]) + '（' + esc(CURRENT_USER[1]) + '），角色：' + esc(CURRENT_ROLE) + '。退回并作废仅财务可操作，确认后直接回退匹配关系并作废。</p>' +
+        '<main class="content"><p class="note">演示界面 v1.1（2026-11-05）。商户、人名、邮箱、交易号和付款账号都是虚构数据，可以直接阅读。当前操作人：' + esc(CURRENT_USER[0]) + '（' + esc(CURRENT_USER[1]) + '），角色：' + esc(CURRENT_ROLE) + '。退回并作废仅财务可操作，确认后直接回退匹配关系并作废。</p>' +
         '<section class="card filter-card"><div class="filter-grid">' +
         field("商户ID", '<input class="control" data-q="merchantId" placeholder="请输入商户ID" aria-label="商户ID">') +
         field("商户名称", '<input class="control" data-q="merchantName" placeholder="请输入商户名称" aria-label="商户名称">') +
@@ -997,7 +1070,7 @@
         '<section class="card table-card"><div class="toolbar"><button type="button" class="btn primary" data-act="create">' + ICONS.plus + '代客提交线下转账</button><button type="button" class="btn ghost" data-act="export">' + ICONS.download + "导出数据</button></div>" +
         '<div class="table-wrap"><table class="list"><thead><tr>' +
         "<th>转账审核单号</th><th>商户ID</th><th>商户名称</th><th>商户唯一标识</th><th>子业务名称</th><th>提交时间</th><th>提交人</th><th>转账平台</th><th>业务填写交易 ID</th><th>转账日期</th><th>付款人名称</th><th>入账币种</th>" +
-        '<th><span class="tip">入账金额<button type="button" class="info" title="资金流水入账后的金额" aria-label="资金流水入账后的金额">' + ICONS.info + "</button></span></th><th>转账分配</th><th>状态</th><th>转账截图</th><th>内部备注</th><th>预充申请</th><th>预充申请单号</th>" +
+        "<th>" + amountLabel() + "</th><th>转账分配</th><th>状态</th><th>转账截图</th><th>内部备注</th><th>预充申请</th><th>预充申请单号</th>" +
         "<th>预充币种</th><th>预充金额</th>" +
         tipHead("客户转账入账币种", "匹配资金流水后的入账币种") +
         tipHead("客户转账入账金额", "匹配资金流水后的入账金额") +
@@ -1015,7 +1088,23 @@
       return state.rows.find((row) => row.id === state.dialog.rowId);
     }
 
-    function customerInfo(row, extras) {
+    function matchFileRow(name, kind, index, removable) {
+      const image = !/\.pdf$/i.test(name);
+      const viewAct = removable ? "match-preview" : "preview-file";
+      const kindAttr = removable ? "" : ' data-kind="' + kind + '"';
+      const remove = removable ? '<button type="button" class="link" data-act="match-remove" data-index="' + index + '">删除</button>' : "";
+      return '<div class="file-row"><i class="kind ' + (image ? "img" : "pdf") + '">' + (image ? "图片" : "PDF") + '</i><span class="file-name" title="' + esc(name) + '">' + esc(name) + '</span><span class="file-ops"><button type="button" class="link" data-act="' + viewAct + '"' + kindAttr + ' data-index="' + index + '">查看</button>' + remove + "</span></div>";
+    }
+
+    function customerInfo(row) {
+      const extras = (state.dialog && state.dialog.extraFiles) || [];
+      const voucher = row.voucher ? '<div class="file-rows">' + matchFileRow(row.voucher, "voucher", 0, false) + "</div>" : "-";
+      const others = rowOthers(row);
+      const otherItems = others.map((name, index) => matchFileRow(name, "other", index, false)).join("") +
+        extras.map((file, index) => matchFileRow(file.name, "extra", index, true)).join("");
+      const otherBody = otherItems ? '<div class="file-rows">' + otherItems + "</div>" : "-";
+      const add = extras.length >= 10 ? "" :
+        '<button type="button" class="add-line" data-act="match-add">新增附件</button><input id="match-files" class="proxy" type="file" accept="image/*,.pdf,application/pdf" multiple>';
       return '<h3 class="section-title first">客户上传的转账信息</h3><div class="info">' +
         kv("商户ID：", esc(row.merchantId)) +
         kv("商户标识：", showText(row.uniqueId, true)) +
@@ -1023,8 +1112,10 @@
         kv("业务类型：", esc(BIZ_CODE[row.biz] || row.biz)) +
         kv("支付平台：", '<span class="low">' + esc(row.platform) + "</span>") +
         kv("转账凭证号：", showText(row.bizTxn)) +
-        '<div class="attach"><em>预览附件：</em><div class="attach-row"><div class="pdf-card"><b>PDF</b><span class="file-name">' + esc(row.voucher) + "</span>" +
-        '<button type="button" class="link" data-act="preview-file">查看</button></div>' + (extras || "") + "</div></div></div>";
+        kv("期望入账金额：", row.amount == null ? "-" : esc(moneyLabel(row.currency, row.amount))) +
+        '</div><div class="match-files">' +
+        '<div class="attach-field"><span>转账凭证</span>' + voucher + "</div>" +
+        '<div class="attach-field"><span>其它转账附件</span>' + otherBody + add + "</div></div>";
     }
 
     function kv(label, value) {
@@ -1055,16 +1146,6 @@
       const row = currentRow();
       const dialog = state.dialog;
       const draft = dialog.draft;
-      const extraFiles = (dialog.extraFiles || []).map((file, index) => {
-        const image = !/\.pdf$/i.test(file.name);
-        return '<div class="pdf-card"><b class="' + (image ? "img" : "") + '">' + (image ? "图片" : "PDF") + '</b><span class="file-name">' + esc(file.name) + '</span><span class="card-ops">' +
-          '<button type="button" class="link" data-act="match-preview" data-index="' + index + '">查看</button>' +
-          '<button type="button" class="link" data-act="match-remove" data-index="' + index + '">删除</button></span></div>';
-      }).join("");
-      const addButton = (dialog.extraFiles || []).length >= 10 ? "" :
-        '<button type="button" class="add-file" data-act="match-add" aria-label="新增附件">' + svg('<path d="M12 5v14M5 12h14"/>', 22) + "</button>";
-      const attachExtras = extraFiles + addButton +
-        '<input id="match-files" class="proxy" type="file" accept="image/*,.pdf,application/pdf" multiple>';
       const filters = '<div class="flow-filters" id="flow-filters">' +
         '<select class="control plat" data-filter="platform" aria-label="支付平台">' + optionList("", draft.platform, ["Airwallex", "Payoneer"]) + "</select>" +
         '<input class="control txn" data-filter="txn" placeholder="交易ID（关键词）" aria-label="交易ID" value="' + esc(draft.txn) + '">' +
@@ -1076,7 +1157,7 @@
         '<button type="button" class="btn primary" data-act="flow-search">筛选</button></div>';
       return '<div class="mask" id="mask"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="match-title">' +
         '<div class="dialog-hd"><h2 id="match-title">匹配转账信息</h2><button type="button" class="icon-btn" data-act="close" aria-label="关闭">' + ICONS.close + "</button></div>" +
-        '<div class="dialog-bd">' + customerInfo(row, attachExtras) +
+        '<div class="dialog-bd">' + customerInfo(row) +
         '<h3 class="section-title"><i class="req">*</i>我司收款账户的交易信息（同支付平台）</h3>' + filters + flowTable() +
         '<div class="remark-line"><h3 class="section-title"><i class="req">*</i>备注</h3>' +
         '<textarea id="remark" class="control' + (dialog.errors.remark ? " bad" : "") + '" rows="4" placeholder="请填写备注信息">' + esc(dialog.remark) + "</textarea>" +
@@ -1130,34 +1211,52 @@
 
     function drawerHtml(row) {
       const figures = drawerFigures(row);
-      const group = { "履约": "履约结算组", "广告": "广告结算组", "物流": "物流结算组" }[row.biz] || "结算组";
+      const fulfill = row.biz === "履约";
       const approvalNo = row.submitAt.replace(/\D/g, "").slice(0, 12);
       const later = plusSeconds(row.submitAt, 2);
+      const preAmount = row.prechargeAmount == null ? figures.pre : row.prechargeAmount;
+      const preCurrency = row.prechargeCurrency || row.currency;
+      const detailFile = (name) => {
+        const image = !/\.pdf$/i.test(name);
+        return '<div class="file-row"><i class="kind ' + (image ? "img" : "pdf") + '">' + (image ? "图片" : "PDF") + '</i><span class="file-name" title="' + esc(name) + '">' + esc(name) + '</span><button type="button" class="link" data-act="drawer-file" data-name="' + esc(name) + '">查看</button></div>';
+      };
+      const fileList = (names) => names.length ? '<div class="file-rows">' + names.map(detailFile).join("") + "</div>" : "-";
+      const others = rowOthers(row);
+      const proofs = row.proofFiles || [];
+      const apply = fulfill
+        ? '<section class="block"><h3>预充申请信息</h3><div class="detail-grid">' +
+          '<div class="pair"><span>运营部业务组</span>' + esc(row.opsGroup || "-") + "</div><div></div>" +
+          '<div class="pair span2"><span>预充证明资料</span>' + fileList(proofs) + "</div></div></section>"
+        : "";
+      const approval = fulfill
+        ? '<div class="pair"><span>需要审批</span>是</div><div class="pair"><span>审批单号</span>' + esc(approvalNo) + "</div>" +
+          '<div class="pair"><span>审批状态</span><i class="chip fill">等待审批</i></div><div class="pair"><span>预充状态</span><i class="chip fill">审批中</i></div>'
+        : '<div class="pair"><span>需要审批</span>否</div><div class="pair"><span>预充状态</span><i class="chip fill">已提交</i></div>';
+      const steps = '<li><i class="dot"></i><div>提交预充申请</div><div class="when">' + esc(row.submitAt) + " · " + esc(row.submitter) + "(" + esc(row.submitterMail) + ")</div></li>" +
+        (fulfill ? '<li><i class="dot"></i><div>已发起飞书审批</div><div class="when">' + esc(later) + " · 等待财务处理</div></li>" : "");
       return '<div class="drawer-mask" id="drawer-mask"><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="pre-title">' +
         '<div class="drawer-hd"><h2 id="pre-title">预充详情</h2><button type="button" class="icon-btn" data-act="close-drawer" aria-label="关闭">' + ICONS.close + "</button></div>" +
-        '<div class="drawer-top"><div class="chips"><span class="chip">' + esc(row.biz) + '</span><span class="chip">等待审批</span></div><span class="drawer-no">' + esc(row.prechargeNo) + "</span></div>" +
+        '<div class="drawer-top"><div class="chips"><span class="chip">' + esc(row.biz) + '</span><span class="chip">' + (fulfill ? "等待审批" : "已提交") + '</span></div><span class="drawer-no">' + esc(row.prechargeNo) + "</span></div>" +
         '<div class="drawer-bd">' +
         '<section class="block"><h3>单据信息</h3><div class="detail-grid">' +
         '<div class="pair"><span>预充申请单号</span>' + esc(row.prechargeNo) + "</div>" +
         '<div class="pair"><span>交易ID</span>' + esc(row.bizTxn) + "</div>" +
         '<div class="pair"><span>商户ID</span>' + esc(row.merchantId) + "</div>" +
         '<div class="pair"><span>子业务</span>' + esc(row.biz) + "</div></div></section>" +
+        '<section class="block"><h3>转账附件</h3><div class="attach-fields">' +
+        '<div class="attach-field"><span>转账凭证</span>' + fileList(row.voucher ? [row.voucher] : []) + "</div>" +
+        '<div class="attach-field"><span>其它转账附件</span>' + fileList(others) + "</div></div></section>" +
         '<section class="block"><h3>商户预充汇总</h3><div class="sum-grid">' +
         '<div class="sum-card"><span>预充金额累计</span><b>' + esc(moneyLabel(row.currency, figures.total)) + "</b></div>" +
         '<div class="sum-card"><span>预充金额未还累计</span><b class="warn">' + esc(moneyLabel(row.currency, figures.unpaid)) + "</b></div></div></section>" +
         '<section class="block"><h3>本单金额</h3><div class="detail-grid">' +
-        '<div class="pair"><span>转账金额</span>' + esc(moneyLabel(row.currency, figures.transfer)) + "</div>" +
-        '<div class="pair"><span>预充金额</span>' + esc(moneyLabel(row.currency, figures.pre)) + "</div></div></section>" +
-        '<section class="block"><h3>审批信息</h3><div class="detail-grid">' +
-        '<div class="pair"><span>运营部业务组</span>' + esc(group) + "</div><div></div>" +
-        '<div class="pair"><span>需要审批</span>是</div>' +
-        '<div class="pair"><span>审批单号</span>' + esc(approvalNo) + "</div>" +
-        '<div class="pair"><span>审批状态</span><i class="chip fill">等待审批</i></div>' +
-        '<div class="pair"><span>预充状态</span><i class="chip fill">审批中</i></div></div></section>' +
-        '<section class="block"><h3>进度</h3><ol class="steps">' +
-        '<li><i class="dot"></i><div>提交预充申请</div><div class="when">' + esc(row.submitAt) + " · " + esc(row.submitter) + "(" + esc(row.submitterMail) + ")</div></li>" +
-        '<li><i class="dot"></i><div>已发起飞书审批</div><div class="when">' + esc(later) + " · 等待财务处理</div></li></ol></section>" +
-        '<section class="block"><h3>备注</h3><div>演示备注，待财务核对</div></section>' +
+        '<div class="pair"><span>期望入账金额</span>' + esc(moneyLabel(row.currency, figures.transfer)) + "</div>" +
+        '<div class="pair"><span>预充金额</span>' + esc(moneyLabel(preCurrency, preAmount)) + "</div>" +
+        '<div class="pair"><span>预计到账时间</span>' + esc(row.expectedAt || "-") + "</div></div></section>" +
+        apply +
+        '<section class="block"><h3>审批信息</h3><div class="detail-grid">' + approval + "</div></section>" +
+        '<section class="block"><h3>进度</h3><ol class="steps">' + steps + "</ol></section>" +
+        '<section class="block"><h3>' + (fulfill ? "预充申请说明" : "预充备注") + "</h3><div>" + esc(row.prechargeRemark || "-") + "</div></section>" +
         "</div></aside></div>";
     }
 
@@ -1194,12 +1293,13 @@
       else if (state.dialog.kind === "create") root.innerHTML = createHtml();
       else root.innerHTML = matchHtml();
       bindCreateZone();
+      bindProofZone();
     }
 
     function emptyCreate() {
       return {
         biz: "", customer: "", currency: "", platform: "", txn: "", date: "",
-        payer: "", amount: "", split: false, ratios: {}, note: "", files: [], errors: {}
+        payer: "", amount: "", split: false, ratios: {}, note: "", voucher: null, files: [], errors: {}
       };
     }
 
@@ -1273,7 +1373,7 @@
     function exampleParts(accounts, ratios, amountText, currency) {
       const base = exampleBase(amountText, currency);
       const unit = base.currency ? " " + base.currency : "";
-      const title = (base.sample ? "按入账 " : "按转账金额 ") + money(base.amount) + unit + (base.sample ? " 举例" : " 计算");
+      const title = (base.sample ? "按期望入账 " : "按期望入账金额 ") + money(base.amount) + unit + (base.sample ? " 举例" : " 计算");
       const lines = accounts.map((item) => {
         const ratio = parseRatio(ratios[item.biz]);
         if (ratio == null) return "<span><b>" + esc(item.biz) + "</b> —</span>";
@@ -1297,44 +1397,91 @@
       list.innerHTML = parts.lines;
     }
 
-    function addCreateFiles(list) {
+    function rerenderCreate() {
+      const body = document.querySelector(".dialog.create .dialog-bd");
+      const top = body ? body.scrollTop : 0;
+      renderOverlay();
+      const next = document.querySelector(".dialog.create .dialog-bd");
+      if (next) next.scrollTop = top;
+    }
+
+    function readUploadFile(file) {
+      const pdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+      const image = file.type.indexOf("image/") === 0;
+      if (!pdf && !image) {
+        showToast("仅支持图片或 PDF");
+        return null;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        showToast("单个文件不能超过 20M");
+        return null;
+      }
+      return { name: file.name, size: file.size };
+    }
+
+    function addCreateVoucher(list) {
+      if (!state.dialog || state.dialog.kind !== "create") return;
+      syncCreate();
+      const form = state.dialog.form;
+      let picked = null;
+      let extra = 0;
+      Array.from(list || []).forEach((file) => {
+        const item = readUploadFile(file);
+        if (!item) return;
+        if (picked) extra += 1;
+        else picked = item;
+      });
+      if (!picked) return;
+      const replaced = !!form.voucher;
+      form.voucher = picked;
+      if (form.errors.voucher) delete form.errors.voucher;
+      if (extra) showToast("转账凭证只能上传 1 个");
+      else if (replaced) showToast("已替换转账凭证");
+      rerenderCreate();
+    }
+
+    function addCreateExtras(list) {
+      if (!state.dialog || state.dialog.kind !== "create") return;
       syncCreate();
       const form = state.dialog.form;
       const next = form.files.slice();
       Array.from(list || []).forEach((file) => {
-        const pdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
-        const image = file.type.indexOf("image/") === 0;
-        if (!pdf && !image) {
-          showToast("仅支持图片或 PDF");
+        const item = readUploadFile(file);
+        if (!item) return;
+        if (next.length >= 3) {
+          showToast("其它转账附件最多 3 个");
           return;
         }
-        if (file.size > 20 * 1024 * 1024) {
-          showToast("单个文件不能超过 20M");
-          return;
-        }
-        if (next.length >= 10) {
-          showToast("最多上传 10 个文件");
-          return;
-        }
-        next.push({ name: file.name, size: file.size });
+        next.push(item);
       });
       form.files = next;
-      if (next.length && form.errors.files) delete form.errors.files;
-      renderOverlay();
+      rerenderCreate();
     }
 
+    let createPasteSlot = "";
+
     function bindCreateZone() {
-      const zone = document.getElementById("upload-zone");
-      if (!zone) return;
-      zone.addEventListener("dragover", (event) => {
-        event.preventDefault();
-        zone.classList.add("over");
-      });
-      zone.addEventListener("dragleave", () => zone.classList.remove("over"));
-      zone.addEventListener("drop", (event) => {
-        event.preventDefault();
-        zone.classList.remove("over");
-        if (event.dataTransfer) addCreateFiles(event.dataTransfer.files);
+      document.querySelectorAll(".upload-slot").forEach((slot) => {
+        const zone = slot.querySelector(".upload");
+        slot.addEventListener("mouseenter", () => { createPasteSlot = slot.dataset.slot || ""; });
+        slot.addEventListener("mouseleave", () => {
+          if (createPasteSlot === slot.dataset.slot) createPasteSlot = "";
+        });
+        slot.addEventListener("dragover", (event) => {
+          event.preventDefault();
+          if (zone) zone.classList.add("over");
+        });
+        slot.addEventListener("dragleave", (event) => {
+          if (slot.contains(event.relatedTarget)) return;
+          if (zone) zone.classList.remove("over");
+        });
+        slot.addEventListener("drop", (event) => {
+          event.preventDefault();
+          if (zone) zone.classList.remove("over");
+          if (!event.dataTransfer) return;
+          if (slot.dataset.slot === "voucher") addCreateVoucher(event.dataTransfer.files);
+          else addCreateExtras(event.dataTransfer.files);
+        });
       });
     }
 
@@ -1371,18 +1518,13 @@
       renderOverlay();
     }
 
-    function addPrechargeFiles(list) {
-      if (!state.dialog || state.dialog.kind !== "precharge") return;
-      const next = (state.dialog.extraFiles || []).slice();
-      takeUploadFiles(list).forEach((file) => {
-        if (next.length >= 10) {
-          showToast("最多上传 10 个文件");
-          return;
-        }
-        next.push(file);
+    function voucherExists(name) {
+      const key = String(name || "").trim().toLowerCase();
+      if (!key) return false;
+      return state.rows.some((row) => {
+        if (row.status === "已撤销" || row.status === "退回并作废") return false;
+        return String(row.voucher || "").trim().toLowerCase() === key;
       });
-      state.dialog.extraFiles = next;
-      renderOverlay();
     }
 
     function validateCreate() {
@@ -1394,7 +1536,9 @@
       if (!form.currency) errors.currency = "请选择转账币种";
       if (!form.platform) errors.platform = "请选择支付平台";
       if (!form.txn.trim()) errors.txn = "请输入转账交易ID";
-      if (form.amount.trim() && !Number.isFinite(Number(form.amount))) errors.amount = "请输入转账金额";
+      const amountText = form.amount.trim();
+      const amountNum = Number(amountText);
+      if (!amountText || !Number.isFinite(amountNum) || amountNum <= 0) errors.amount = "请输入期望入账金额";
       const accounts = customerAccounts(createCustomer());
       if (form.split && accounts.length > 1) {
         accounts.forEach((item) => {
@@ -1403,7 +1547,8 @@
         const warn = ratioWarn(ratioTotal(accounts, form.ratios));
         if (warn) errors.ratioSum = warn;
       }
-      if (!form.files.length) errors.files = "请上传文件";
+      if (!form.voucher) errors.voucher = "请上传转账凭证";
+      else if (voucherExists(form.voucher.name)) errors.voucher = "该转账凭证已存在，请勿重复提交";
       form.errors = errors;
       return !Object.keys(errors).length;
     }
@@ -1411,6 +1556,11 @@
     function submitCreate() {
       if (!validateCreate()) {
         renderOverlay();
+        const failed = state.dialog && state.dialog.form.errors;
+        const slot = failed && failed.amount
+          ? document.getElementById("create-amount")
+          : document.querySelector('[data-slot="voucher"]');
+        if (failed && (failed.amount || failed.voucher) && slot) slot.scrollIntoView({ block: "nearest" });
         return;
       }
       const form = state.dialog.form;
@@ -1439,8 +1589,9 @@
         payer: form.payer.trim() || "-",
         currency: form.currency,
         amount: amount,
-        voucher: form.files[0].name,
-        shots: form.files.map((file) => file.name),
+        voucher: form.voucher.name,
+        others: form.files.map((file) => file.name),
+        shots: [form.voucher.name].concat(form.files.map((file) => file.name)),
         assign: assign,
         confirmStatus: "已确认",
         status: "待匹配",
@@ -1477,7 +1628,7 @@
           '<div class="split-hd"><div class="form-label"><i class="req">*</i>分配比例</div><p class="ratio-sum' + sumClass + '" id="ratio-sum">' + esc(sumText) + "</p></div>" +
           '<div class="ratio-board" style="grid-template-columns: repeat(' + accounts.length + ', minmax(0, 1fr))">' + lines + "</div>" +
           '<p class="err" id="ratio-error"' + (warn ? "" : " hidden") + ">" + esc(warn) + "</p>" +
-          '<p class="ratio-hint">匹配成功后，入账金额将按业务线分配比例进行分配，总和100%，</p>' +
+          '<p class="ratio-hint">匹配成功后，期望入账金额将按业务线分配比例进行分配，总和100%，</p>' +
           '<div class="ratio-sample"><p class="ratio-sample-title" id="ratio-sample-title">' + esc(sample.title) + '</p><div class="ratio-sample-list" id="ratio-sample-list">' + sample.lines + "</div></div>"
         : "";
       return '<div class="span2 split-block"><div class="switch-row"><span>开启按比例划拨</span><button type="button" class="switch' + (form.split ? " on" : "") + '" data-act="toggle-split" role="switch" aria-checked="' + (form.split ? "true" : "false") + '"><i></i></button><span>' + (form.split ? "开启" : "关闭") + "</span></div>" + ratios + "</div>";
@@ -1494,7 +1645,13 @@
       const radio = (value) => '<label><input type="radio" name="create-biz" value="' + value + '"' + (form.biz === value ? " checked" : "") + ">" + value + "</label>";
       const bad = (key) => errors[key] ? " bad" : "";
       const err = (key) => errors[key] ? '<p class="err">' + esc(errors[key]) + "</p>" : "";
-      const files = form.files.map((file, index) => '<li><span>' + esc(file.name) + '</span><button type="button" class="link" data-act="remove-file" data-index="' + index + '">移除</button></li>').join("");
+      const voucherFile = form.voucher
+        ? '<ul class="file-list"><li><span title="' + esc(form.voucher.name) + '">' + esc(form.voucher.name) + '</span><button type="button" class="link" data-act="remove-file" data-kind="voucher">移除</button></li></ul>'
+        : "";
+      const files = form.files.map((file, index) => '<li><span title="' + esc(file.name) + '">' + esc(file.name) + '</span><button type="button" class="link" data-act="remove-file" data-kind="extra" data-index="' + index + '">移除</button></li>').join("");
+      const uploadZone = (id, multiple, bad) => '<label class="upload compact' + (bad ? " bad" : "") + '">' + ICONS.upload +
+        "<strong>点击、拖拽或粘贴</strong>" +
+        '<input id="' + id + '" type="file" accept="image/*,.pdf,application/pdf"' + (multiple ? " multiple" : "") + "></label>";
       return '<div class="mask" id="mask"><div class="dialog create" role="dialog" aria-modal="true" aria-labelledby="create-title">' +
         '<div class="dialog-hd"><h2 id="create-title">代客提交线下转账</h2><button type="button" class="icon-btn" data-act="close" aria-label="关闭">' + ICONS.close + "</button></div>" +
         '<div class="dialog-bd create-bd"><div class="form-grid">' +
@@ -1506,13 +1663,13 @@
         '<div><div class="form-label"><i class="req">*</i>交易ID</div><input id="create-txn" class="control' + bad("txn") + '" placeholder="请输入转账交易ID" aria-label="交易ID" value="' + esc(form.txn) + '">' + err("txn") + "</div>" +
         '<div><div class="form-label">转账日期</div><div class="control range"><span class="range-text' + (form.date ? "" : " placeholder") + '" id="create-date-label">' + esc(form.date || "请选择转账日期") + '</span><button type="button" class="cal" data-act="pick" data-which="create-date" aria-label="打开日期">' + ICONS.calendar + '</button><input class="proxy" id="create-date" type="date" aria-label="转账日期" value="' + esc(form.date) + '"></div></div>' +
         '<div><div class="form-label">付款人名称</div><input id="create-payer" class="control" placeholder="请输入付款人名称" aria-label="付款人名称" value="' + esc(form.payer) + '"></div>' +
-        '<div><div class="form-label">转账金额</div><input id="create-amount" class="control' + bad("amount") + '" inputmode="decimal" placeholder="请输入转账金额" aria-label="转账金额" value="' + esc(form.amount) + '">' + err("amount") + "</div>" +
+        '<div><div class="form-label"><i class="req">*</i>' + amountLabel() + '</div><input id="create-amount" class="control' + bad("amount") + '" inputmode="decimal" placeholder="请输入期望入账金额" aria-label="期望入账金额" value="' + esc(form.amount) + '">' + err("amount") + "</div>" +
         splitHtml(customer) +
-        '<div class="span2"><div class="form-label"><i class="req">*</i>上传文件（支持图片/pdf格式文件，最多10个，单个文件20M内）</div>' +
-        '<label class="upload' + (errors.files ? " bad" : "") + '" id="upload-zone">' + ICONS.upload +
-        "<strong>点击或拖拽或粘贴文件到此区域上传</strong><span>支持图片/pdf格式文件</span>" +
-        '<input id="create-files" type="file" accept="image/*,.pdf,application/pdf" multiple></label>' +
-        (files ? '<ul class="file-list">' + files + "</ul>" : "") + err("files") + "</div>" +
+        '<div class="upload-pair span2">' +
+        '<div class="upload-slot" data-slot="voucher"><div class="form-label"><i class="req">*</i>转账凭证</div><p class="upload-hint">仅 1 个，图片或 PDF，20M 内</p>' +
+        uploadZone("create-voucher", false, !!errors.voucher) + voucherFile + err("voucher") + "</div>" +
+        '<div class="upload-slot" data-slot="extra"><div class="form-label">其它转账附件</div><p class="upload-hint">最多 3 个，图片或 PDF，单个 20M 内</p>' +
+        uploadZone("create-files", true, false) + (files ? '<ul class="file-list">' + files + "</ul>" : "") + "</div></div>" +
         '<div class="span2"><div class="form-label">内部备注</div><div class="void-box">' +
         '<textarea id="create-note" class="control" maxlength="1000" placeholder="请输入内部备注">' + esc(form.note) + "</textarea>" +
         '<span class="void-count" id="create-count">' + form.note.length + " / 1000</span></div></div>" +
@@ -1533,7 +1690,7 @@
         '<div class="alert-title">说明</div>' +
         '<div class="alert">' +
         "<p>退回并作废后，将解除当前转账审核单与已匹配流水的关联关系，并作废该审核单。</p>" +
-        "<p>执行退回前，客户可用余额须大于或等于转账金额。满足条件后，系统将从客户可用余额中扣减对应金额。</p>" +
+        "<p>执行退回前，客户可用余额须大于或等于期望入账金额。满足条件后，系统将从客户可用余额中扣减对应金额。</p>" +
         "</div>" +
         '<div class="void-body"><div class="remark-label">备注</div><div class="void-box">' +
         '<textarea id="void-remark" class="control" maxlength="1000" placeholder="请输入备注信息（最多1000字）">' + esc(remark) + "</textarea>" +
@@ -1655,7 +1812,7 @@
     }
 
     function openPrecharge(row) {
-      state.dialog = { kind: "precharge", rowId: row.id, amount: "", remark: "", arrive: "", viewed: false, extraFiles: [], group: "", groupQuery: "", groupOpen: false, guideOpen: true, legend: "", errors: {} };
+      state.dialog = { kind: "precharge", rowId: row.id, amount: "", remark: "", arrive: "", viewed: false, extraFiles: [], proofFiles: [], group: "", groupQuery: "", groupOpen: false, guideOpen: true, legend: "", errors: {} };
       renderOverlay();
     }
 
@@ -1676,7 +1833,7 @@
       return '<div class="amount-pair"><div><div class="form-label"><i class="req">*</i>预充金额</div>' +
         '<div class="amount-input' + (errors.amount ? " bad" : "") + '"><input id="precharge-amount" class="control" inputmode="decimal" placeholder="' + esc(placeholder) + '" aria-label="预充金额" value="' + esc(dialog.amount || "") + '"><span>' + esc(row.currency) + "</span></div>" +
         (errors.amount ? '<p class="err">' + esc(errors.amount) + "</p>" : "") +
-        '</div><div><div class="form-label"><i class="req">*</i>预计到账时间</div>' +
+        '</div><div><div class="form-label">预计到账时间</div>' +
         '<div class="control range date-field' + (errors.arrive ? " bad" : "") + '" data-act="pick" data-which="precharge-arrive"><span class="range-text' + (arrive ? "" : " placeholder") + '" id="precharge-arrive-label">' + esc(arrive || "请选择预计到账时间") + '</span><button type="button" class="cal" data-act="pick" data-which="precharge-arrive" aria-label="打开日期">' + ICONS.calendar + '</button><input class="proxy" id="precharge-arrive" type="date" min="' + tomorrowValue() + '" aria-label="预计到账时间" value="' + esc(arrive) + '"></div>' +
         (errors.arrive ? '<p class="err">' + esc(errors.arrive) + "</p>" : "") +
         "</div></div>";
@@ -1696,24 +1853,97 @@
       return adPrechargeHtml(row);
     }
 
+    function attachFile(name, kind, index) {
+      const image = !/\.pdf$/i.test(name);
+      return '<div class="file-row"><i class="kind ' + (image ? "img" : "pdf") + '">' + (image ? "图片" : "PDF") + '</i><span class="file-name" title="' + esc(name) + '">' + esc(name) + '</span><button type="button" class="link" data-act="preview-file" data-kind="' + kind + '" data-index="' + index + '">查看</button></div>';
+    }
+
+    function attachFiles(names, kind) {
+      if (!names.length) return "-";
+      return '<div class="file-rows">' + names.map((name, index) => attachFile(name, kind, index)).join("") + "</div>";
+    }
+
     function prechargeAttachRow() {
-      const dialog = state.dialog;
       const row = currentRow();
-      const card = (name, actions) => {
-        const image = !/\.pdf$/i.test(name);
-        return '<div class="pdf-card"><b class="' + (image ? "img" : "") + '">' + (image ? "图片" : "PDF") + '</b><span class="file-name">' + esc(name) + "</span>" + actions + "</div>";
-      };
-      const original = card(row.voucher, '<button type="button" class="link" data-act="preview-file">查看</button>');
-      const extras = (dialog.extraFiles || []).map((file, index) => card(file.name, '<span class="card-ops">' +
-        '<button type="button" class="link" data-act="precharge-preview" data-index="' + index + '">查看</button>' +
-        '<button type="button" class="link" data-act="precharge-remove" data-index="' + index + '">删除</button></span>')).join("");
-      const plus = (dialog.extraFiles || []).length >= 10 ? "" :
-        '<button type="button" class="add-file" data-act="precharge-add" aria-label="新增附件">' + svg('<path d="M12 5v14M5 12h14"/>', 22) + "</button>";
-      const tip = row.biz === "履约"
-        ? '<p class="attach-tip">USD 500 以上提供《平台回执》，USD 500 以下提供《转账记录》。<button type="button" class="link" data-act="guide-open">查看填写说明</button></p>'
-        : "";
-      return '<tr><th>预览附件</th><td colspan="3"><div class="attach-row">' + original + extras + plus +
-        '<input id="precharge-files" class="proxy" type="file" accept="image/*,.pdf,application/pdf" multiple></div>' + tip + "</td></tr>";
+      return '<tr class="attach-split"><th>转账凭证</th><td colspan="3">' + attachFiles(row.voucher ? [row.voucher] : [], "voucher") + "</td></tr>" +
+        '<tr class="attach-split"><th>其它转账附件</th><td colspan="3">' + attachFiles(rowOthers(row), "other") + "</td></tr>";
+    }
+
+    function proofHtml() {
+      const dialog = state.dialog;
+      const files = dialog.proofFiles || [];
+      const list = files.map((file, index) => '<li><span title="' + esc(file.name) + '">' + esc(file.name) + '</span><span class="file-ops">' +
+        '<button type="button" class="link" data-act="proof-preview" data-index="' + index + '">查看</button>' +
+        '<button type="button" class="link" data-act="proof-remove" data-index="' + index + '">移除</button></span></li>').join("");
+      const error = dialog.errors && dialog.errors.proof;
+      return '<div class="proof-block"><div class="form-label"><i class="req">*</i>预充证明资料</div>' +
+        '<p class="upload-hint">图片或 PDF，最多 3 个，单个 20M 内</p>' +
+        '<label class="upload compact' + (error ? " bad" : "") + '" id="proof-zone">' + ICONS.upload +
+        "<strong>点击、拖拽或粘贴</strong>" +
+        '<input id="precharge-proof" type="file" accept="image/*,.pdf,application/pdf" multiple></label>' +
+        (list ? '<ul class="file-list">' + list + "</ul>" : "") +
+        (error ? '<p class="err">' + esc(error) + "</p>" : "") +
+        '<p class="attach-tip">USD 500 以上提供《平台回执》，USD 500 以下提供《转账记录》。<button type="button" class="link" data-act="guide-open">查看填写说明</button></p></div>';
+    }
+
+    function syncPrecharge() {
+      if (!state.dialog || state.dialog.kind !== "precharge") return;
+      const dialog = state.dialog;
+      const amount = document.getElementById("precharge-amount");
+      const remark = document.getElementById("precharge-remark");
+      const arrive = document.getElementById("precharge-arrive");
+      const group = document.getElementById("precharge-group");
+      if (amount) dialog.amount = amount.value;
+      if (remark) dialog.remark = remark.value;
+      if (arrive) dialog.arrive = arrive.value;
+      if (group) {
+        dialog.groupQuery = group.value;
+        dialog.group = OPS_GROUPS.indexOf(group.value) >= 0 ? group.value : "";
+      }
+    }
+
+    function rerenderPrecharge() {
+      const body = document.querySelector(".dialog.precharge .dialog-bd");
+      const top = body ? body.scrollTop : 0;
+      renderOverlay();
+      const next = document.querySelector(".dialog.precharge .dialog-bd");
+      if (next) next.scrollTop = top;
+    }
+
+    function addProofFiles(list) {
+      if (!state.dialog || state.dialog.kind !== "precharge") return;
+      syncPrecharge();
+      const dialog = state.dialog;
+      const next = (dialog.proofFiles || []).slice();
+      Array.from(list || []).forEach((file) => {
+        const item = readUploadFile(file);
+        if (!item) return;
+        if (next.length >= 3) {
+          showToast("预充证明资料最多 3 个");
+          return;
+        }
+        next.push(item);
+      });
+      dialog.proofFiles = next;
+      if (next.length && dialog.errors) delete dialog.errors.proof;
+      rerenderPrecharge();
+    }
+
+    function bindProofZone() {
+      const zone = document.getElementById("proof-zone");
+      if (!zone || !state.dialog) return;
+      zone.addEventListener("mouseenter", () => { state.dialog.proofHover = true; });
+      zone.addEventListener("mouseleave", () => { if (state.dialog) state.dialog.proofHover = false; });
+      zone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        zone.classList.add("over");
+      });
+      zone.addEventListener("dragleave", () => zone.classList.remove("over"));
+      zone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        zone.classList.remove("over");
+        if (event.dataTransfer) addProofFiles(event.dataTransfer.files);
+      });
     }
 
     function guideHtml() {
@@ -1772,7 +2002,7 @@
       const amount = row.amount == null ? "-" : money(row.amount);
       const cap = row.amount == null ? "" : money(row.amount);
       const biz = "fulfill";
-      const placeholder = cap ? "请输入预充金额，不可大于转账金额 " + cap : "请输入预充金额";
+      const placeholder = cap ? "请输入预充金额，不可大于期望入账金额 " + cap : "请输入预充金额";
       return '<div class="mask" id="mask"><div class="dialog precharge" role="dialog" aria-modal="true" aria-labelledby="precharge-title">' +
         '<div class="dialog-hd"><h2 id="precharge-title">预充</h2><button type="button" class="icon-btn" data-act="close" aria-label="关闭">' + ICONS.close + "</button></div>" +
         '<div class="dialog-bd">' + guideHtml() +
@@ -1780,7 +2010,7 @@
         '<table class="sheet"><tbody>' +
         "<tr><th>商户ID</th><td>" + esc(row.merchantId) + "</td><th>商户邮箱</th><td>" + esc(row.uniqueId) + "</td></tr>" +
         "<tr><th>商户名称</th><td>" + esc(row.merchantName) + "</td><th>子业务</th><td>" + biz + "</td></tr>" +
-        "<tr><th>客户转账币种</th><td>" + esc(row.currency) + "</td><th>客户转账金额</th><td>" + esc(amount) + "</td></tr>" +
+        "<tr><th>客户转账币种</th><td>" + esc(row.currency) + "</td><th>期望入账金额</th><td>" + esc(amount) + "</td></tr>" +
         prechargeAttachRow() +
         "</tbody></table>" +
         '<div class="notice"><i>i</i><span>履约业务预充提交后将发起飞书审批，请等待审批结果。</span></div>' +
@@ -1790,6 +2020,7 @@
         '<span class="search-icon">' + ICONS.search + "</span>" + groupMenuHtml() + "</div>" +
         (errors.group ? '<p class="err">' + esc(errors.group) + "</p>" : "") +
         prechargeAmountPair(placeholder) +
+        proofHtml() +
         '<div class="form-label" style="margin-top:16px"><i class="req">*</i>预充申请说明</div>' +
         '<div class="void-box precharge-note"><textarea id="precharge-remark" class="control' + (errors.remark ? " bad" : "") + '" maxlength="500" placeholder="此处填写预充申请事由" aria-label="预充申请说明">' + esc(dialog.remark || "") + "</textarea>" +
         '<span class="void-count" id="precharge-count">' + (dialog.remark || "").length + " / 500</span></div>" +
@@ -1812,7 +2043,7 @@
         '<table class="sheet"><tbody>' +
         "<tr><th>商户ID</th><td>" + esc(row.merchantId) + "</td><th>商户邮箱</th><td>" + esc(row.uniqueId) + "</td></tr>" +
         "<tr><th>商户名称</th><td>" + esc(row.merchantName) + "</td><th>子业务</th><td>" + esc(biz) + "</td></tr>" +
-        "<tr><th>客户转账币种</th><td>" + esc(row.currency) + "</td><th>客户转账金额</th><td>" + esc(amount) + "</td></tr>" +
+        "<tr><th>客户转账币种</th><td>" + esc(row.currency) + "</td><th>期望入账金额</th><td>" + esc(amount) + "</td></tr>" +
         prechargeAttachRow() +
         "</tbody></table>" +
         '<h3 class="section-title">客户预充额度信息</h3>' +
@@ -1829,6 +2060,29 @@
         "</div>" +
         '<div class="dialog-ft precharge-ft"><span class="precharge-hint">请先查看预览一次文件，尽量确保客户已经转账。</span>' +
         '<button type="button" class="btn default" data-act="close">取消</button><button type="button" class="btn primary" data-act="precharge-ok">提交</button></div></div></div>';
+    }
+
+    function proofTaken(name, exceptId) {
+      const key = String(name || "").trim().toLowerCase();
+      if (!key) return false;
+      return state.rows.some((row) => {
+        if (row.id === exceptId) return false;
+        if (row.status === "已撤销" || row.status === "退回并作废") return false;
+        return (row.proofFiles || []).some((file) => String(file).trim().toLowerCase() === key);
+      });
+    }
+
+    function duplicateProof(files, exceptId) {
+      const seen = {};
+      let found = "";
+      (files || []).forEach((file) => {
+        if (found) return;
+        const key = String(file.name || "").trim().toLowerCase();
+        if (!key) return;
+        if (seen[key] || proofTaken(file.name, exceptId)) found = file.name;
+        seen[key] = true;
+      });
+      return found;
     }
 
     function submitPrecharge() {
@@ -1851,14 +2105,20 @@
       const errors = {};
       if (fulfill && !dialog.group) errors.group = "请选择运营部业务组";
       if (!amount || !/^\d+(\.\d{1,2})?$/.test(amount) || Number(amount) <= 0) errors.amount = "请输入预充金额";
-      else if (fulfill && row.amount != null && Number(amount) > Number(row.amount)) errors.amount = "预充金额不可大于转账金额";
+      else if (fulfill && row.amount != null && Number(amount) > Number(row.amount)) errors.amount = "预充金额不可大于期望入账金额";
       if (!remark) errors.remark = fulfill ? "请填写预充申请事由" : "请输入备注信息";
-      if (!dialog.arrive) errors.arrive = "请选择预计到账时间";
-      else if (dialog.arrive < tomorrowValue()) errors.arrive = "预计到账时间只能选择今日之后的日期";
+      if (dialog.arrive && dialog.arrive < tomorrowValue()) errors.arrive = "预计到账时间只能选择今日之后的日期";
+      if (fulfill && !(dialog.proofFiles || []).length) errors.proof = "请上传预充证明资料";
+      else if (fulfill) {
+        const duplicate = duplicateProof(dialog.proofFiles, row.id);
+        if (duplicate) errors.proof = "预充证明资料「" + duplicate + "」已存在，请勿重复提交";
+      }
       if (!dialog.viewed) errors.file = "请先查看预览一次文件，尽量确保客户已经转账。";
       dialog.errors = errors;
-      if (errors.group || errors.amount || errors.arrive || errors.remark || errors.file) {
+      if (errors.group || errors.amount || errors.arrive || errors.remark || errors.proof || errors.file) {
         renderOverlay();
+        const zone = document.getElementById("proof-zone");
+        if (errors.proof && zone) zone.scrollIntoView({ block: "nearest" });
         return;
       }
       const index = Number(row.id.slice(2)) - 1;
@@ -1866,14 +2126,15 @@
       row.prechargeCurrency = row.currency;
       row.prechargeAmount = Number(amount);
       row.expectedAt = dialog.arrive;
+      row.prechargeRemark = remark;
       if (!row.prechargeNo) {
         const tail = String(mix(index + 81) % 100).padStart(2, "0");
         row.prechargeNo = "PF" + row.submitAt.replace(/\D/g, "").slice(0, 14) + tail;
       }
-      if (dialog.extraFiles && dialog.extraFiles.length) {
-        row.shots = rowShots(row).concat(dialog.extraFiles.map((file) => file.name));
+      if (fulfill) {
+        row.opsGroup = dialog.group;
+        row.proofFiles = (dialog.proofFiles || []).map((file) => file.name);
       }
-      if (fulfill) row.opsGroup = dialog.group;
       showToast(fulfill ? "已提交审批（演示）" : "已提交预充（演示）");
       closeDialog();
       renderRows();
@@ -2016,8 +2277,9 @@
       }
       if (act === "remove-file" && state.dialog && state.dialog.kind === "create") {
         syncCreate();
-        state.dialog.form.files.splice(Number(button.dataset.index), 1);
-        renderOverlay();
+        if (button.dataset.kind === "voucher") state.dialog.form.voucher = null;
+        else state.dialog.form.files.splice(Number(button.dataset.index), 1);
+        rerenderCreate();
         return;
       }
       if (act === "export") return showToast("演示页不导出敏感字段");
@@ -2057,6 +2319,10 @@
         return;
       }
       if (act === "close-drawer") return closeDrawer();
+      if (act === "drawer-file") {
+        state.shotName = button.dataset.name || "";
+        return openPdf();
+      }
       if (act === "match" && row) return openMatch(row);
       if (act === "reject" && row && row.status === "已匹配" && isFinance()) return openInvalidate(row);
       if (act === "void-ok") return submitVoid();
@@ -2078,27 +2344,31 @@
         state.dialog.previewName = files[Number(button.dataset.index)] || "";
         return openPdf();
       }
-      if (act === "precharge-add" && state.dialog && state.dialog.kind === "precharge") {
-        const input = document.getElementById("precharge-files");
-        if (input) input.click();
-        return;
+      if (act === "preview-file") {
+        state.shotName = "";
+        const current = currentRow();
+        if (state.dialog && (state.dialog.kind === "precharge" || state.dialog.kind === "match")) {
+          if (button.dataset.kind === "other") {
+            const files = rowOthers(current);
+            state.dialog.previewName = files[Number(button.dataset.index)] || "";
+          } else {
+            if (state.dialog.kind === "precharge") state.dialog.viewed = true;
+            state.dialog.previewName = current ? current.voucher : "";
+          }
+        } else if (state.dialog) state.dialog.previewName = "";
+        return openPdf();
       }
-      if (act === "precharge-preview" && state.dialog && state.dialog.kind === "precharge") {
-        const file = state.dialog.extraFiles[Number(button.dataset.index)];
+      if (act === "proof-preview" && state.dialog && state.dialog.kind === "precharge") {
+        const file = (state.dialog.proofFiles || [])[Number(button.dataset.index)];
         state.shotName = "";
         state.dialog.previewName = file ? file.name : "";
         return openPdf();
       }
-      if (act === "precharge-remove" && state.dialog && state.dialog.kind === "precharge") {
-        state.dialog.extraFiles.splice(Number(button.dataset.index), 1);
-        renderOverlay();
+      if (act === "proof-remove" && state.dialog && state.dialog.kind === "precharge") {
+        syncPrecharge();
+        state.dialog.proofFiles.splice(Number(button.dataset.index), 1);
+        rerenderPrecharge();
         return;
-      }
-      if (act === "preview-file") {
-        state.shotName = "";
-        if (state.dialog && state.dialog.kind === "precharge") state.dialog.viewed = true;
-        if (state.dialog) state.dialog.previewName = "";
-        return openPdf();
       }
       if (act === "match-add" && state.dialog && state.dialog.kind === "match") {
         const input = document.getElementById("match-files");
@@ -2122,6 +2392,36 @@
 
     document.getElementById("app").innerHTML = shell();
     renderRows();
+    const hoverTip = document.createElement("div");
+    hoverTip.id = "hover-tip";
+    hoverTip.hidden = true;
+    document.body.appendChild(hoverTip);
+
+    function placeHoverTip(host) {
+      hoverTip.textContent = host.getAttribute("data-tip") || "";
+      hoverTip.hidden = false;
+      const rect = host.getBoundingClientRect();
+      const tipRect = hoverTip.getBoundingClientRect();
+      let left = rect.left + rect.width / 2 - tipRect.width / 2;
+      let top = rect.bottom + 8;
+      if (left + tipRect.width > window.innerWidth - 8) left = window.innerWidth - tipRect.width - 8;
+      if (left < 8) left = 8;
+      if (top + tipRect.height > window.innerHeight - 8) top = Math.max(8, rect.top - tipRect.height - 8);
+      hoverTip.style.left = left + "px";
+      hoverTip.style.top = top + "px";
+    }
+
+    document.addEventListener("mouseover", (event) => {
+      const host = event.target.closest("[data-tip]");
+      if (!host) return;
+      placeHoverTip(host);
+    });
+    document.addEventListener("mouseout", (event) => {
+      const host = event.target.closest("[data-tip]");
+      if (!host || host.contains(event.relatedTarget)) return;
+      hoverTip.hidden = true;
+    });
+    document.addEventListener("scroll", () => { hoverTip.hidden = true; }, true);
 
     document.addEventListener("click", (event) => {
       if (event.target.id === "legend-mask") return closeLegend();
@@ -2213,16 +2513,20 @@
           label.classList.toggle("placeholder", !target.value);
         }
       }
+      if (target.id === "create-voucher") {
+        addCreateVoucher(target.files);
+        target.value = "";
+      }
       if (target.id === "create-files") {
-        addCreateFiles(target.files);
+        addCreateExtras(target.files);
+        target.value = "";
+      }
+      if (target.id === "precharge-proof") {
+        addProofFiles(target.files);
         target.value = "";
       }
       if (target.id === "match-files" && state.dialog && state.dialog.kind === "match") {
         addMatchFiles(target.files);
-        target.value = "";
-      }
-      if (target.id === "precharge-files" && state.dialog && state.dialog.kind === "precharge") {
-        addPrechargeFiles(target.files);
         target.value = "";
       }
       if (target.id === "flow-size" && state.dialog) {
@@ -2336,7 +2640,17 @@
       if (!state.dialog || !event.clipboardData || !event.clipboardData.files || !event.clipboardData.files.length) return;
       if (state.dialog.kind === "create") {
         event.preventDefault();
-        addCreateFiles(event.clipboardData.files);
+        const slot = event.target.closest ? event.target.closest(".upload-slot") : null;
+        const target = (slot && slot.dataset.slot) || createPasteSlot;
+        if (target === "extra" || (target !== "voucher" && state.dialog.form.voucher)) addCreateExtras(event.clipboardData.files);
+        else addCreateVoucher(event.clipboardData.files);
+      }
+      if (state.dialog.kind === "precharge") {
+        const inZone = event.target.closest && event.target.closest("#proof-zone");
+        if (inZone || state.dialog.proofHover) {
+          event.preventDefault();
+          addProofFiles(event.clipboardData.files);
+        }
       }
     });
 
