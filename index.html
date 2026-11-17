@@ -560,7 +560,7 @@
   });
 })();
 </script>
-    <div id="app"></div>
+  <div id="app"></div>
   <div id="overlay"></div>
   <div id="drawer"></div>
   <div id="toast" role="status"></div>
@@ -1120,29 +1120,21 @@
       return state.rows.find((row) => row.id === state.dialog.rowId);
     }
 
-    function matchFileRow(name, kind, index, removable) {
+    function matchFileRow(name, kind, index) {
       const image = !/\.pdf$/i.test(name);
-      const viewAct = removable ? "match-preview" : "preview-file";
-      const kindAttr = removable ? "" : ' data-kind="' + kind + '"';
-      const remove = removable ? '<button type="button" class="link" data-act="match-remove" data-index="' + index + '">删除</button>' : "";
-      return '<div class="file-row"><i class="kind ' + (image ? "img" : "pdf") + '">' + (image ? "图片" : "PDF") + '</i><span class="file-name" title="' + esc(name) + '">' + esc(name) + '</span><span class="file-ops"><button type="button" class="link" data-act="' + viewAct + '"' + kindAttr + ' data-index="' + index + '">查看</button>' + remove + "</span></div>";
+      return '<div class="file-row"><i class="kind ' + (image ? "img" : "pdf") + '">' + (image ? "图片" : "PDF") + '</i><span class="file-name" title="' + esc(name) + '">' + esc(name) + '</span><span class="file-ops"><button type="button" class="link" data-act="preview-file" data-kind="' + kind + '" data-index="' + index + '">查看</button></span></div>';
     }
 
     function customerInfo(row) {
-      const extras = (state.dialog && state.dialog.extraFiles) || [];
-      const voucher = row.voucher ? '<div class="file-rows">' + matchFileRow(row.voucher, "voucher", 0, false) + "</div>" : "-";
+      const voucher = row.voucher ? '<div class="file-rows">' + matchFileRow(row.voucher, "voucher", 0) + "</div>" : "-";
       const others = rowOthers(row);
-      const otherItems = others.map((name, index) => matchFileRow(name, "other", index, false)).join("") +
-        extras.map((file, index) => matchFileRow(file.name, "extra", index, true)).join("");
+      const otherItems = others.map((name, index) => matchFileRow(name, "other", index)).join("");
       const otherBody = otherItems ? '<div class="file-rows">' + otherItems + "</div>" : "-";
-      const canAdd = state.dialog && state.dialog.kind === "match";
-      const add = !canAdd || extras.length >= 10 ? "" :
-        '<button type="button" class="add-line" data-act="match-add">新增附件</button><input id="match-files" class="proxy" type="file" accept="image/*,.pdf,application/pdf" multiple>';
       const summary = customerSheet(row);
       return '<h3 class="section-title first">客户上传的转账信息</h3>' + summary +
         '<div class="match-files">' +
         '<div class="attach-field"><span>转账凭证</span>' + voucher + "</div>" +
-        '<div class="attach-field"><span>其它转账附件</span>' + otherBody + add + "</div></div>";
+        '<div class="attach-field"><span>其它转账附件</span>' + otherBody + "</div></div>";
     }
 
     function customerSheet(row) {
@@ -1564,21 +1556,6 @@
       return incoming;
     }
 
-    function addMatchFiles(list) {
-      if (!state.dialog || state.dialog.kind !== "match") return;
-      syncDialogFields();
-      const next = state.dialog.extraFiles.slice();
-      takeUploadFiles(list).forEach((file) => {
-        if (next.length >= 10) {
-          showToast("最多上传 10 个文件");
-          return;
-        }
-        next.push(file);
-      });
-      state.dialog.extraFiles = next;
-      renderOverlay();
-    }
-
     function fileStem(name) {
       const base = String(name || "").trim().toLowerCase().split(/[/\\]/).pop();
       const dot = base.lastIndexOf(".");
@@ -1893,7 +1870,6 @@
         flowPageSize: 20,
         selectedId: "",
         remark: "",
-        extraFiles: (row.extraFiles || []).map((file) => ({ name: file.name, size: file.size })),
         errors: {}
       };
       renderOverlay();
@@ -1912,7 +1888,7 @@
     }
 
     function openPrecharge(row) {
-      state.dialog = { kind: "precharge", rowId: row.id, amount: "", remark: "", arrive: "", viewed: false, voucher: row.voucher || "", voucherKey: row.voucherKey || "", others: rowOthers(row).slice(), extraFiles: [], proofFiles: [], proofChecking: false, proofCheckSeq: 0, proofReuse: false, group: "", groupQuery: "", groupOpen: false, guideOpen: true, legend: "", errors: {} };
+      state.dialog = { kind: "precharge", rowId: row.id, amount: "", remark: "", arrive: "", viewed: false, voucher: row.voucher || "", voucherKey: row.voucherKey || "", others: rowOthers(row).slice(), proofFiles: [], proofChecking: false, proofCheckSeq: 0, proofReuse: false, group: "", groupQuery: "", groupOpen: false, guideOpen: true, legend: "", errors: {} };
       renderOverlay();
     }
 
@@ -2248,7 +2224,7 @@
         '<span class="void-count" id="precharge-count">' + (dialog.remark || "").length + " / 500</span></div>" +
         (errors.remark ? '<p class="err">' + esc(errors.remark) + "</p>" : "") +
         "</div>" +
-        '<div class="dialog-ft precharge-ft"><span class="precharge-hint">请先查看预览一次文件，尽量确保客户已经转账。</span>' +
+        '<div class="dialog-ft precharge-ft"><span class="precharge-hint">请先查看预览一次转账凭证，尽量确保客户已经转账且符合预充材料要求。</span>' +
         '<button type="button" class="btn default" data-act="close">取消</button><button type="button" class="btn primary" data-act="precharge-ok">提交审批</button></div></div></div>';
     }
 
@@ -2281,7 +2257,7 @@
         '<span class="void-count" id="precharge-count">' + (dialog.remark || "").length + " / 500</span></div>" +
         (errors.remark ? '<p class="err">' + esc(errors.remark) + "</p>" : "") +
         "</div>" +
-        '<div class="dialog-ft precharge-ft"><span class="precharge-hint">请先查看预览一次文件，尽量确保客户已经转账。</span>' +
+        '<div class="dialog-ft precharge-ft"><span class="precharge-hint">请先查看预览一次转账凭证，尽量确保客户已经转账且符合预充材料要求。</span>' +
         '<button type="button" class="btn default" data-act="close">取消</button><button type="button" class="btn primary" data-act="precharge-ok">提交</button></div></div></div>';
     }
 
@@ -2342,7 +2318,7 @@
       if (!remark) errors.remark = fulfill ? "请填写预充申请事由" : "请输入备注信息";
       if (dialog.arrive && dialog.arrive < tomorrowValue()) errors.arrive = "预计到账时间只能选择今日之后的日期";
       if (!dialog.voucher) errors.voucher = "请上传转账凭证";
-      else if (!dialog.viewed) errors.file = "请先查看预览一次文件，尽量确保客户已经转账。";
+      else if (!dialog.viewed) errors.file = "请先查看预览一次转账凭证，尽量确保客户已经转账且符合预充材料要求。";
       dialog.errors = errors;
       if (errors.group || errors.amount || errors.arrive || errors.remark || errors.voucher || errors.file) {
         renderOverlay();
@@ -2458,7 +2434,6 @@
       row.matcher = CURRENT_USER[0];
       row.matcherMail = CURRENT_USER[1];
       row.matchRemark = state.dialog.remark.trim();
-      row.extraFiles = state.dialog.extraFiles.map((file) => ({ name: file.name, size: file.size }));
       row.auditAt = "";
       row.auditor = "";
       row.auditorMail = "";
@@ -2620,23 +2595,6 @@
         rerenderPrecharge();
         return;
       }
-      if (act === "match-add" && state.dialog && state.dialog.kind === "match") {
-        const input = document.getElementById("match-files");
-        if (input) input.click();
-        return;
-      }
-      if (act === "match-preview" && state.dialog && state.dialog.kind === "match") {
-        state.shotName = "";
-        const file = state.dialog.extraFiles[Number(button.dataset.index)];
-        state.dialog.previewName = file ? file.name : "";
-        return openPdf();
-      }
-      if (act === "match-remove" && state.dialog && state.dialog.kind === "match") {
-        syncDialogFields();
-        state.dialog.extraFiles.splice(Number(button.dataset.index), 1);
-        renderOverlay();
-        return;
-      }
       if (act === "close-pdf") return closePdf();
     }
 
@@ -2777,10 +2735,6 @@
       }
       if (target.id === "precharge-others") {
         addPrechargeOthers(target.files);
-        target.value = "";
-      }
-      if (target.id === "match-files" && state.dialog && state.dialog.kind === "match") {
-        addMatchFiles(target.files);
         target.value = "";
       }
       if (target.id === "flow-size" && state.dialog) {
